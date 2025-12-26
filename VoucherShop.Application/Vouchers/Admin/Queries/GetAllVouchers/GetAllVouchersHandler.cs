@@ -11,7 +11,7 @@ public sealed class GetAllVouchersHandler
     private readonly ICurrentUser _currentUser;
 
     public GetAllVouchersHandler(
-        IVoucherReadContext db,
+        IVoucherReadContext db, 
         ICurrentUser currentUser)
     {
         _db = db;
@@ -23,6 +23,7 @@ public sealed class GetAllVouchersHandler
         CancellationToken ct)
     {
         var shopId = _currentUser.ShopId;
+
         if (shopId == Guid.Empty)
             throw new UnauthorizedAccessException("Missing shop context.");
 
