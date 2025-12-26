@@ -30,7 +30,10 @@ public sealed class AdminVouchersController : ControllerBase
         CancellationToken ct)
     {
         await _mediator.Send(
-            new UpdateVoucherAmountCommand(TargetUserId: userId, NewAmount: body.NewAmount),
+            new UpdateVoucherAmountCommand(
+                TargetUserId: userId,
+                NewAmount: body.NewAmount,
+                NewExpiresAtUtc: body.NewExpiresAtUtc),
             ct);
 
         return NoContent();

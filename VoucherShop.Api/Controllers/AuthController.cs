@@ -167,6 +167,103 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    // ✅ Registrazione self-service per utenti finali su uno shop specifico
+    [AllowAnonymous]
+    [HttpPost("self-register")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SelfRegister(
+        [FromBody] SelfRegisterRequest request,
+        CancellationToken ct)
+    {
+        var shopExists = await _db.Shops.AnyAsync(s => s.Id == request.ShopId, ct);
+        if (!shopExists)
+            return NotFound("Shop not found.");
+
+        var existingUser = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email, ct);
+
+        if (existingUser != null)
+        {
+            var reason = existingUser.ShopId == request.ShopId
+                ? "User already exists in this shop."
+                : "User already exists in another shop.";
+
+            return BadRequest(reason);
+        }
+
+        var user = new AppUser
+        {
+            Id = Guid.NewGuid(),
+            Email = request.Email,
+            UserName = request.Email,
+            ShopId = request.ShopId
+        };
+
+        var result = await _userManager.CreateAsync(user, request.Password);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        await _userManager.AddToRoleAsync(user, "User");
+
+        return CreatedAtAction(
+            nameof(SelfRegister),
+            new SelfRegisterResponse(user.Id, user.Email!, user.ShopId)
+        );
+    }
+
+    // ✅ Richiesta token reset password (email + ShopId per evitare enumerazione cross-tenant)
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ForgotPassword(
+        [FromBody] ForgotPasswordRequest request,
+        CancellationToken ct)
+    {
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.ShopId == request.ShopId, ct);
+
+        if (user is null)
+            return NotFound("User not found for this shop.");
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        return Ok(new PasswordResetTokenResponse(token));
+    }
+
+    // ✅ Reset password tenant-aware
+    [AllowAnonymous]
+    [HttpPost("reset-password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ResetPassword(
+        [FromBody] ResetPasswordRequest request,
+        CancellationToken ct)
+    {
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.ShopId == request.ShopId, ct);
+
+        if (user is null)
+            return NotFound("User not found for this shop.");
+
+        var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        var activeTokens = await _db.RefreshTokens
+            .Where(r => r.UserId == user.Id && !r.IsRevoked && r.ExpiresAt > DateTime.UtcNow)
+            .ToListAsync(ct);
+
+        foreach (var token in activeTokens)
+            token.IsRevoked = true;
+
+        await _db.SaveChangesAsync(ct);
+
+        return NoContent();
+    }
+
     // ✅ Register tenant-aware (solo utenti autenticati, tipicamente Admin)
     // Crea un user nello stesso Shop del caller (shop_id da token)
     [Authorize(Roles = "Admin")]

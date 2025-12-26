@@ -1,11 +1,12 @@
-﻿using System.Text.Json;
+﻿namespace VoucherShop.Application.Vouchers.Commands.UpdateVoucherAmount;
+
+using System.Collections.Generic;
+using System.Text.Json;
 using MediatR;
 using VoucherShop.Application.Common.Exceptions;
 using VoucherShop.Application.Interfaces;
 using VoucherShop.Domain.Entities;
 using VoucherShop.Domain.ValueObjects;
-
-namespace VoucherShop.Application.Vouchers.Commands.UpdateVoucherAmount;
 
 public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAmountCommand>
 {
@@ -36,23 +37,47 @@ public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAm
             ?? throw new NotFoundException("Shop not found.");
 
         var voucher = await _voucherRepo.GetByShopAndUserIdAsync(shopId, request.TargetUserId, ct);
+        var isNewVoucher = voucher is null;
+        var now = DateTime.UtcNow;
 
         // Snapshot per audit
         decimal? oldAmount = voucher?.Balance.Amount;
         string? oldCurrency = voucher?.Balance.Currency;
         DateTime? oldExpiresAt = voucher?.ExpiresAt;
 
-        if (voucher is null)
+        if (request.NewExpiresAtUtc is { } requestedExpires && requestedExpires <= now)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                [nameof(request.NewExpiresAtUtc)] = new[] { "Expiration must be in the future." }
+            });
+        }
+
+        if (isNewVoucher)
         {
             // ✅ create (insert)
             var initial = new Money(request.NewAmount, shop.Currency);
             voucher = new Voucher(shopId, request.TargetUserId, initial);
             _voucherRepo.Add(voucher);
+
+            if (request.NewExpiresAtUtc is { } newExpires)
+            {
+                voucher.OverrideExpiration(newExpires);
+            }
         }
         else
         {
             // ✅ update (solo amount)
             voucher.UpdateAmount(request.NewAmount);
+
+            if (request.NewExpiresAtUtc is { } overrideExpiresAt)
+            {
+                voucher.OverrideExpiration(overrideExpiresAt);
+            }
+            else if (oldAmount is not null && request.NewAmount > oldAmount)
+            {
+                voucher.RenewExpiration(now);
+            }
         }
 
         // ✅ audit business
@@ -62,7 +87,7 @@ public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAm
             ShopId = shopId,
             EntityName = nameof(Voucher),
             EntityId = voucher.UserId, // chiave logica per "history" di quell'utente
-            Action = voucher is null ? "Create" : "Update", // se vuoi, calcolalo prima
+            Action = isNewVoucher ? "Create" : "Update", // se vuoi, calcolalo prima
             Changes = JsonSerializer.Serialize(new
             {
                 amount = new { old = oldAmount, @new = voucher.Balance.Amount },

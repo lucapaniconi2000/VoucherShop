@@ -40,5 +40,17 @@ public sealed class Voucher
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void RenewExpiration(DateTime nowUtc, int months = 3)
+    {
+        ExpiresAt = nowUtc.AddMonths(months);
+        UpdatedAt = nowUtc;
+    }
+
+    public void OverrideExpiration(DateTime newExpiresAtUtc)
+    {
+        ExpiresAt = newExpiresAtUtc;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public bool IsExpired(DateTime nowUtc) => nowUtc > ExpiresAt;
 }
