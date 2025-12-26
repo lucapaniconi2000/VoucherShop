@@ -30,6 +30,7 @@ public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAm
     public async Task Handle(UpdateVoucherAmountCommand request, CancellationToken ct)
     {
         var shopId = _currentUser.ShopId;
+        var now = DateTime.UtcNow;
 
         if (shopId == Guid.Empty)
             throw new UnauthorizedAccessException("Missing shop context.");
