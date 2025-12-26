@@ -4,5 +4,6 @@ namespace VoucherShop.Application.Vouchers.Commands.UpdateVoucherAmount;
 
 public sealed record UpdateVoucherAmountCommand(
     Guid TargetUserId,
-    decimal NewAmount
+    decimal NewAmount,
+    DateTime? NewExpiresAtUtc
 ) : IRequest;

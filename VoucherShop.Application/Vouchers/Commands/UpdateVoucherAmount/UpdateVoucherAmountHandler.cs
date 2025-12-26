@@ -1,11 +1,12 @@
-﻿using System.Text.Json;
+﻿namespace VoucherShop.Application.Vouchers.Commands.UpdateVoucherAmount;
+
+using System.Collections.Generic;
+using System.Text.Json;
 using MediatR;
 using VoucherShop.Application.Common.Exceptions;
 using VoucherShop.Application.Interfaces;
 using VoucherShop.Domain.Entities;
 using VoucherShop.Domain.ValueObjects;
-
-namespace VoucherShop.Application.Vouchers.Commands.UpdateVoucherAmount;
 
 public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAmountCommand>
 {
@@ -50,11 +51,25 @@ public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAm
             var initial = new Money(request.NewAmount, shop.Currency);
             voucher = new Voucher(shopId, request.TargetUserId, initial);
             _voucherRepo.Add(voucher);
+
+            if (request.NewExpiresAtUtc is { } newExpires)
+            {
+                voucher.OverrideExpiration(newExpires);
+            }
         }
         else
         {
             // ✅ update (solo amount)
             voucher.UpdateAmount(request.NewAmount);
+
+            if (request.NewExpiresAtUtc is { } overrideExpiresAt)
+            {
+                voucher.OverrideExpiration(overrideExpiresAt);
+            }
+            else if (oldAmount is not null && request.NewAmount > oldAmount)
+            {
+                voucher.RenewExpiration(now);
+            }
         }
 
         // ✅ audit business
