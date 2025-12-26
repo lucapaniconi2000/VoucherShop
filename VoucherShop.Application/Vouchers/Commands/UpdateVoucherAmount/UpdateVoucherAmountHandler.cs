@@ -36,13 +36,14 @@ public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAm
             ?? throw new NotFoundException("Shop not found.");
 
         var voucher = await _voucherRepo.GetByShopAndUserIdAsync(shopId, request.TargetUserId, ct);
+        var isNewVoucher = voucher is null;
 
         // Snapshot per audit
         decimal? oldAmount = voucher?.Balance.Amount;
         string? oldCurrency = voucher?.Balance.Currency;
         DateTime? oldExpiresAt = voucher?.ExpiresAt;
 
-        if (voucher is null)
+        if (isNewVoucher)
         {
             // ✅ create (insert)
             var initial = new Money(request.NewAmount, shop.Currency);
@@ -62,7 +63,7 @@ public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAm
             ShopId = shopId,
             EntityName = nameof(Voucher),
             EntityId = voucher.UserId, // chiave logica per "history" di quell'utente
-            Action = voucher is null ? "Create" : "Update", // se vuoi, calcolalo prima
+            Action = isNewVoucher ? "Create" : "Update", // se vuoi, calcolalo prima
             Changes = JsonSerializer.Serialize(new
             {
                 amount = new { old = oldAmount, @new = voucher.Balance.Amount },
