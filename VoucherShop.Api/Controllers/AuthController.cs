@@ -216,7 +216,7 @@ public class AuthController : ControllerBase
     // ✅ Richiesta token reset password (email + ShopId per evitare enumerazione cross-tenant)
     [AllowAnonymous]
     [HttpPost("forgot-password")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ForgotPassword(
         [FromBody] ForgotPasswordRequest request,
@@ -228,8 +228,8 @@ public class AuthController : ControllerBase
         if (user is null)
             return NotFound("User not found for this shop.");
 
-        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-        return Ok(new PasswordResetTokenResponse(token));
+        _ = await _userManager.GeneratePasswordResetTokenAsync(user);
+        return NoContent();
     }
 
     // ✅ Reset password tenant-aware
