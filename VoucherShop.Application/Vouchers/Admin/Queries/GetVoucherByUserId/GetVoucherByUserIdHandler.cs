@@ -11,7 +11,7 @@ public sealed class GetVoucherByUserIdHandler
     private readonly ICurrentUser _currentUser;
 
     public GetVoucherByUserIdHandler(
-        IVoucherReadContext db,
+        IVoucherReadContext db, 
         ICurrentUser currentUser)
     {
         _db = db;
@@ -23,6 +23,7 @@ public sealed class GetVoucherByUserIdHandler
         CancellationToken ct)
     {
         var shopId = _currentUser.ShopId;
+
         if (shopId == Guid.Empty)
             throw new UnauthorizedAccessException("Missing shop context.");
 
@@ -30,7 +31,8 @@ public sealed class GetVoucherByUserIdHandler
 
         return await _db.Vouchers
             .AsNoTracking()
-            .Where(v => v.ShopId == shopId && v.UserId == request.UserId)
+            .Where(v => v.UserId == request.UserId)
+            .Where(v => v.ShopId == shopId)
             .Select(v => new AdminVoucherDto(
                 v.UserId,
                 v.Balance.Amount,

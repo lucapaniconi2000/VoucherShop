@@ -30,6 +30,7 @@ public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAm
     public async Task Handle(UpdateVoucherAmountCommand request, CancellationToken ct)
     {
         var shopId = _currentUser.ShopId;
+
         if (shopId == Guid.Empty)
             throw new UnauthorizedAccessException("Missing shop context.");
 
@@ -38,20 +39,11 @@ public sealed class UpdateVoucherAmountHandler : IRequestHandler<UpdateVoucherAm
 
         var voucher = await _voucherRepo.GetByShopAndUserIdAsync(shopId, request.TargetUserId, ct);
         var isNewVoucher = voucher is null;
-        var now = DateTime.UtcNow;
 
         // Snapshot per audit
         decimal? oldAmount = voucher?.Balance.Amount;
         string? oldCurrency = voucher?.Balance.Currency;
         DateTime? oldExpiresAt = voucher?.ExpiresAt;
-
-        if (request.NewExpiresAtUtc is { } requestedExpires && requestedExpires <= now)
-        {
-            throw new ValidationException(new Dictionary<string, string[]>
-            {
-                [nameof(request.NewExpiresAtUtc)] = new[] { "Expiration must be in the future." }
-            });
-        }
 
         if (isNewVoucher)
         {
