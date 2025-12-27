@@ -11,3 +11,4 @@ These docs explain how VoucherShop is structured, how to run it locally, how the
 - [06 — Troubleshooting](06-troubleshooting.md)
 - [07 — Multi tenancy benefits](07-multi-tenancy-benefits.md)
 - [08 — Frontend Playbook (Angular)](08-frontend-playbook.md)
+- [09 — Frontend Api Contracts (Angular)](09-frontend-api-contract.md)
