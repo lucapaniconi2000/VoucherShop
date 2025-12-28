@@ -1,0 +1,36 @@
+<div class="container">
+  <div class="card" style="max-width: 520px; margin: 0 auto;">
+    <div class="card-header">
+      <h1 class="h1">Login</h1>
+      <p class="sub">Accedi per visualizzare il tuo voucher o gestire lo shop (Admin).</p>
+    </div>
+
+    <div class="card-body">
+      <form class="form" (ngSubmit)="submit()">
+        <label class="label">
+          Email
+          <input class="input" type="email" [(ngModel)]="email" name="email" required />
+        </label>
+
+        <label class="label">
+          Password
+          <input class="input" type="password" [(ngModel)]="password" name="password" required />
+        </label>
+
+        <div class="row" style="margin-top: 6px;">
+          <button class="btn" type="submit" [disabled]="loading">
+            {{ loading ? 'Accesso…' : 'Login' }}
+          </button>
+
+          <button class="btn btn-ghost" type="button" (click)="email=''; password=''; error=null;">
+            Pulisci
+          </button>
+        </div>
+
+        <div *ngIf="error" class="alert">
+          {{ error }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

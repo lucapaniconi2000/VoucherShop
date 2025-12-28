@@ -20,7 +20,7 @@ public sealed class AdminUsersController : ControllerBase
         _userManager = userManager;
         _currentUser = currentUser;
     }
-
+    
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

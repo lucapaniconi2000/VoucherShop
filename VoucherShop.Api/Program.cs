@@ -9,6 +9,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerWithJwt();
 
+// CORS
+builder.Services.AddFrontendCors(builder.Configuration);
+
 // Infrastructure
 builder.Services
     .AddDatabase(builder.Configuration)
@@ -20,6 +23,8 @@ builder.Services
 var app = builder.Build();
 
 // Pipeline
+app.UseFrontendCors();
+
 await app.ConfigurePipelineAsync();
 
 app.Run();

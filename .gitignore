@@ -18,3 +18,8 @@ obj/
 appsettings.Development.json
 .env
 .env.*
+
+# Angular
+vouchershop-fe/node_modules
+vouchershop-fe/.angular
+vouchershop-fe/dist

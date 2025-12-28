@@ -1,0 +1,7 @@
+.shell { min-height: 100vh; display: flex; flex-direction: column; }
+.topbar { display:flex; justify-content:space-between; padding:16px 24px; border-bottom:1px solid #eee; }
+.brand { font-weight:700; }
+.nav { display:flex; gap:12px; }
+.content { padding:24px; max-width: 960px; margin: 0 auto; width:100%; }
+a { text-decoration:none; }
+a:hover { text-decoration:underline; }
