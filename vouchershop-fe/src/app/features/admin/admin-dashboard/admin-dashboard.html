@@ -1,3 +1,84 @@
+<section class="card" style="margin-bottom: 12px;">
+  <header class="card__header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+    <h2 style="margin:0;">Users</h2>
+    <button class="btn btn-ghost" type="button" (click)="reloadUsers()">Reload</button>
+  </header>
+
+  <ng-container *ngIf="usersVm$ | async as vm">
+    <p *ngIf="vm.state === 'loading'" style="color: rgba(255,255,255,.7); margin: 8px 0;">
+      Loading users…
+    </p>
+
+    <p *ngIf="vm.state === 'error'" style="color: rgba(255,90,122,.9); margin: 8px 0;">
+      {{ vm.message }}
+    </p>
+
+    <p *ngIf="vm.state === 'empty'" style="color: rgba(255,255,255,.7); margin: 8px 0;">
+      Nessun utente nello shop.
+    </p>
+
+    <ul *ngIf="vm.state === 'ready'" style="list-style:none; padding:0; margin: 8px 0; display:grid; gap:8px;">
+      <li *ngFor="let u of vm.users; trackBy: trackByUserId">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          style="width:100%; text-align:left; display:flex; flex-direction:column; gap:2px;"
+          (click)="selectUser(u)"
+        >
+          <span style="font-weight:600;">{{ u.email }}</span>
+          <span style="color: rgba(255,255,255,.6); font-size: 12px;">
+            {{ u.userName || u.id }}
+          </span>
+        </button>
+      </li>
+    </ul>
+  </ng-container>
+</section>
+<section class="card" style="margin-bottom: 12px;">
+  <h2 style="margin:0 0 8px 0;">Create user</h2>
+
+  <form class="form" [formGroup]="createUserForm">
+    <label class="label">
+      Email
+      <input class="input" formControlName="email" placeholder="email utente" />
+      <small *ngIf="createEmailCtrl.touched && createEmailCtrl.errors?.['required']" style="color: rgba(255,255,255,.7)">
+        Email obbligatoria
+      </small>
+      <small *ngIf="createEmailCtrl.touched && createEmailCtrl.errors?.['email']" style="color: rgba(255,90,122,.9)">
+        Email non valida
+      </small>
+    </label>
+
+    <label class="label">
+      Password
+      <input class="input" type="password" formControlName="password" placeholder="min 8 caratteri" />
+      <small *ngIf="createPasswordCtrl.touched && createPasswordCtrl.errors?.['required']" style="color: rgba(255,255,255,.7)">
+        Password obbligatoria
+      </small>
+      <small *ngIf="createPasswordCtrl.touched && createPasswordCtrl.errors?.['minlength']" style="color: rgba(255,90,122,.9)">
+        Minimo 8 caratteri
+      </small>
+    </label>
+
+    <ng-container *ngIf="createUserVm$ | async as vm">
+      <div class="row" style="margin-top: 6px;">
+        <button class="btn" type="button" (click)="createUser()"
+                [disabled]="createUserForm.invalid || vm.state === 'loading'">
+          {{ vm.state === 'loading' ? 'Creazione…' : 'Create User' }}
+        </button>
+
+        <small *ngIf="vm.state === 'success'" style="color: rgba(140,255,170,.9); align-self:center;">
+          {{ vm.message }}
+        </small>
+
+        <small *ngIf="vm.state === 'error'" style="color: rgba(255,90,122,.9); align-self:center;">
+          {{ vm.message }}
+        </small>
+      </div>
+    </ng-container>
+  </form>
+</section>
+
 <form class="form" [formGroup]="form">
   <label class="label">
     UserId

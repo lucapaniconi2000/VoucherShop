@@ -9,9 +9,9 @@ import {
   AbstractControl,
   ValidationErrors,
 } from '@angular/forms';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, exhaustMap, map, startWith, withLatestFrom } from 'rxjs/operators';
-import { AdminDashboardApi, VoucherAuditDto } from './admin-dashboard.api';
+import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
+import { catchError, exhaustMap, map, shareReplay, startWith, withLatestFrom } from 'rxjs/operators';
+import { AdminDashboardApi, VoucherAuditDto, AdminUserDto } from './admin-dashboard.api';
 
 type HistoryVm =
   | { state: 'idle' }
@@ -21,6 +21,18 @@ type HistoryVm =
   | { state: 'ready'; items: VoucherAuditDto[] };
 
 type UpdateVm =
+  | { state: 'idle' }
+  | { state: 'loading' }
+  | { state: 'success'; message: string }
+  | { state: 'error'; message: string };
+
+type UsersVm =
+  | { state: 'loading' }
+  | { state: 'empty' }
+  | { state: 'error'; message: string }
+  | { state: 'ready'; users: AdminUserDto[] };
+
+type CreateUserVm =
   | { state: 'idle' }
   | { state: 'loading' }
   | { state: 'success'; message: string }
@@ -36,6 +48,16 @@ type AdminFormValue = {
   userId: string;
   newAmount: number;
   expiresAtLocal: string;
+};
+
+type CreateUserForm = {
+  email: FormControl<string>;
+  password: FormControl<string>;
+};
+
+type CreateUserFormValue = {
+  email: string;
+  password: string;
 };
 
 // ✅ GUID validator
@@ -66,7 +88,6 @@ function localDateTimeToUtcIso(localValue: string): string {
   return d.toISOString();
 }
 
-
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -77,11 +98,18 @@ function localDateTimeToUtcIso(localValue: string): string {
 export class AdminDashboardComponent {
   private readonly loadHistory$ = new BehaviorSubject<void>(undefined);
   private readonly doUpdate$ = new BehaviorSubject<void>(undefined);
+  private readonly loadUsers$ = new BehaviorSubject<void>(undefined);
+
+  // ✅ create user trigger (niente emission iniziale)
+  private readonly doCreateUser$ = new Subject<void>();
 
   readonly form: FormGroup<AdminForm>;
+  readonly createUserForm: FormGroup<CreateUserForm>;
 
   readonly historyVm$: Observable<HistoryVm>;
   readonly updateVm$: Observable<UpdateVm>;
+  readonly usersVm$: Observable<UsersVm>;
+  readonly createUserVm$: Observable<CreateUserVm>;
 
   constructor(
     private readonly fb: NonNullableFormBuilder,
@@ -95,11 +123,21 @@ export class AdminDashboardComponent {
       expiresAtLocal: this.fb.control(defaultLocal, { validators: [Validators.required] }),
     });
 
+    // ✅ Create user form
+    this.createUserForm = this.fb.group<CreateUserForm>({
+      email: this.fb.control('', { validators: [Validators.required, Validators.email] }),
+      password: this.fb.control('', { validators: [Validators.required, Validators.minLength(8)] }),
+    });
 
     // stream che produce SEMPRE un valore completo (non Partial)
     const rawValue$ = this.form.valueChanges.pipe(
       map(() => this.form.getRawValue()),
       startWith(this.form.getRawValue())
+    );
+
+    const createRawValue$ = this.createUserForm.valueChanges.pipe(
+      map(() => this.createUserForm.getRawValue() as CreateUserFormValue),
+      startWith(this.createUserForm.getRawValue() as CreateUserFormValue)
     );
 
     this.historyVm$ = this.loadHistory$.pipe(
@@ -137,6 +175,51 @@ export class AdminDashboardComponent {
       }),
       startWith({ state: 'idle' } as const)
     );
+
+    this.usersVm$ = this.loadUsers$.pipe(
+      exhaustMap(() =>
+        this.api.users().pipe(
+          map(users => (users?.length ? ({ state: 'ready', users } as const) : ({ state: 'empty' } as const))),
+          catchError(() => of({ state: 'error', message: 'Impossibile caricare gli utenti.' } as const)),
+          startWith({ state: 'loading' } as const)
+        )
+      ),
+      shareReplay(1)
+    );
+
+    // ✅ Create user VM
+    this.createUserVm$ = this.doCreateUser$.pipe(
+      withLatestFrom(createRawValue$),
+      exhaustMap(([, v]) => {
+        const email = v.email.trim();
+        const password = v.password;
+
+        if (this.createUserForm.invalid) {
+          return of({ state: 'error', message: 'Email/password non valide.' } as const);
+        }
+
+        return this.api.register({ email, password }).pipe(
+          map(res => {
+            // refresh lista utenti
+            this.reloadUsers();
+
+            // autopopola userId e carica history
+            this.form.controls.userId.setValue(res.userId);
+            this.form.controls.userId.markAsTouched();
+            this.loadHistory$.next();
+
+            // reset form create user
+            this.createUserForm.reset({ email: '', password: '' });
+
+            return { state: 'success', message: `Utente creato: ${res.email}` } as const;
+          }),
+          catchError(() => of({ state: 'error', message: 'Creazione fallita (email già esistente?).' } as const)),
+          startWith({ state: 'loading' } as const)
+        );
+      }),
+      startWith({ state: 'idle' } as const),
+      shareReplay(1)
+    );
   }
 
   get userIdCtrl() {
@@ -149,6 +232,14 @@ export class AdminDashboardComponent {
 
   get expiresCtrl() {
     return this.form.controls.expiresAtLocal;
+  }
+
+  get createEmailCtrl() {
+    return this.createUserForm.controls.email;
+  }
+
+  get createPasswordCtrl() {
+    return this.createUserForm.controls.password;
   }
 
   get expiresAtUtcPreview(): string {
@@ -173,7 +264,27 @@ export class AdminDashboardComponent {
     this.doUpdate$.next();
   }
 
+  createUser(): void {
+    this.createUserForm.markAllAsTouched();
+    if (this.createUserForm.invalid) return;
+    this.doCreateUser$.next();
+  }
+
   parseChanges(json: string): any {
     try { return JSON.parse(json); } catch { return json; }
+  }
+
+  selectUser(u: AdminUserDto): void {
+    this.form.controls.userId.setValue(u.id);
+    this.form.controls.userId.markAsTouched();
+    this.loadHistory$.next(); // auto-load history appena selezionato
+  }
+
+  reloadUsers(): void {
+    this.loadUsers$.next();
+  }
+
+  trackByUserId(_: number, u: AdminUserDto) {
+    return u.id;
   }
 }
