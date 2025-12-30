@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MyVoucher } from './my-voucher';
+import { MyVoucherComponent } from './my-voucher';
 
 describe('MyVoucher', () => {
-  let component: MyVoucher;
-  let fixture: ComponentFixture<MyVoucher>;
+  let component: MyVoucherComponent;
+  let fixture: ComponentFixture<MyVoucherComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MyVoucher]
+      imports: [MyVoucherComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(MyVoucher);
+    fixture = TestBed.createComponent(MyVoucherComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

@@ -1,7 +1,96 @@
-.shell { min-height: 100vh; display: flex; flex-direction: column; }
-.topbar { display:flex; justify-content:space-between; padding:16px 24px; border-bottom:1px solid #eee; }
-.brand { font-weight:700; }
-.nav { display:flex; gap:12px; }
-.content { padding:24px; max-width: 960px; margin: 0 auto; width:100%; }
-a { text-decoration:none; }
-a:hover { text-decoration:underline; }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 14px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(10, 18, 32, 0.55);
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* stile comune per link e button */
+.nav-link {
+  text-decoration: none;
+  color: rgba(255,255,255,.82);
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: background .15s ease, color .15s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* specifico per button */
+button.nav-link {
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.16);
+  background: transparent;
+  font: inherit; /* prende il font del sito */
+}
+
+/* hover */
+.nav-link:hover {
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.95);
+  text-decoration: none;
+}
+
+/* active solo per i link */
+a.nav-link.active {
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.98);
+}
+
+.nav a {
+  text-decoration: none; /* evita underline */
+  color: rgba(255,255,255,.82);
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: background .15s ease, color .15s ease;
+}
+
+.nav a:hover {
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.95);
+  text-decoration: none;
+}
+
+.nav a.active {
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.98);
+}
+
+.content {
+  padding: 28px 18px;
+}
+
+.nav-btn {
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.16);
+  background: transparent;
+  color: rgba(255,255,255,.82);
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.nav-btn:hover {
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.95);
+}
+

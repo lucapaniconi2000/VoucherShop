@@ -1,6 +1,95 @@
-<h1>Admin</h1>
-<p>Qui faremo:</p>
-<ul>
-  <li>Creare/aggiornare voucher utente</li>
-  <li>Vedere history audit</li>
-</ul>
+<form class="form" [formGroup]="form">
+  <label class="label">
+    UserId
+    <input class="input" formControlName="userId" placeholder="GUID utente" />
+
+    <small
+      *ngIf="userIdCtrl.touched && userIdCtrl.errors?.['required']"
+      style="color: rgba(255,255,255,.7)"
+    >
+      UserId è obbligatorio
+    </small>
+
+    <small
+      *ngIf="userIdCtrl.touched && userIdCtrl.errors?.['guid']"
+      style="color: rgba(255,90,122,.9)"
+    >
+      UserId non è un GUID valido
+    </small>
+  </label>
+
+  <div class="row">
+    <label class="label" style="flex: 1;">
+      New Amount
+      <input
+        class="input"
+        type="number"
+        formControlName="newAmount"
+        min="0"
+        step="0.01"
+      />
+
+      <small
+        *ngIf="amountCtrl.touched && amountCtrl.errors?.['required']"
+        style="color: rgba(255,255,255,.7)"
+      >
+        Importo obbligatorio
+      </small>
+
+      <small
+        *ngIf="amountCtrl.touched && amountCtrl.errors?.['min']"
+        style="color: rgba(255,90,122,.9)"
+      >
+        L’importo non può essere negativo
+      </small>
+    </label>
+
+    <label class="label" style="flex: 1;">
+      Expires At
+      <input
+        class="input"
+        type="datetime-local"
+        formControlName="expiresAtLocal"
+      />
+
+      <small
+        *ngIf="expiresCtrl.touched && expiresCtrl.errors?.['required']"
+        style="color: rgba(255,255,255,.7)"
+      >
+        Scadenza obbligatoria
+      </small>
+
+      <small
+        *ngIf="expiresAtUtcPreview"
+        style="color: rgba(255,255,255,.7)"
+      >
+        UTC che verrà inviato: <b>{{ expiresAtUtcPreview }}</b>
+      </small>
+    </label>
+  </div>
+
+  <!-- Bottoni: leggiamo entrambi gli stati (update + history) -->
+  <ng-container *ngIf="(updateVm$ | async) as u">
+    <ng-container *ngIf="(historyVm$ | async) as h">
+      <div class="row" style="margin-top: 6px;">
+        <button
+          class="btn"
+          type="button"
+          (click)="updateVoucher()"
+          [disabled]="form.invalid || u.state === 'loading'"
+        >
+          {{ u.state === 'loading' ? 'Aggiornamento…' : 'Update Voucher' }}
+        </button>
+
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="loadHistory()"
+          [disabled]="userIdCtrl.invalid || h.state === 'loading'"
+        >
+          {{ h.state === 'loading' ? 'Caricamento…' : 'Load History' }}
+        </button>
+      </div>
+    </ng-container>
+  </ng-container>
+</form>

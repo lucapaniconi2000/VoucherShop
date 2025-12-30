@@ -1,11 +1,16 @@
 <div class="shell">
   <header class="topbar">
-    <div class="brand">VoucherShop</div>
+    <a class="brand" routerLink="/login">VoucherShop</a>
 
     <nav class="nav">
-      <a routerLink="/me/voucher">My Voucher</a>
-      <a routerLink="/admin">Admin</a>
-      <a routerLink="/login">Login</a>
+      <a *ngIf="isUser" class="nav-link" routerLink="/me/voucher" routerLinkActive="active">My Voucher</a>
+      <a *ngIf="isAdmin" class="nav-link" routerLink="/admin" routerLinkActive="active">Admin</a>
+
+      <a *ngIf="!isLoggedIn" class="nav-link" routerLink="/login" routerLinkActive="active">Login</a>
+
+      <button *ngIf="isLoggedIn" class="nav-link nav-btn" type="button" (click)="logout()">
+        Logout
+      </button>
     </nav>
   </header>
 

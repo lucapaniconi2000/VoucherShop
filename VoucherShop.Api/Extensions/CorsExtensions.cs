@@ -2,7 +2,7 @@
 
 public static class CorsExtensions
 {
-    private const string FePolicy = "FrontendPolicy";
+    private const string FePolicy = "Spa";
 
     public static IServiceCollection AddFrontendCors(
         this IServiceCollection services,
@@ -13,9 +13,7 @@ public static class CorsExtensions
             options.AddPolicy(FePolicy, policy =>
             {
                 policy
-                    .WithOrigins(
-                        "http://localhost:4200" // Angular dev
-                    )
+                    .WithOrigins("http://localhost:4200", "https://localhost:4200") // Angular dev
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials(); // 🔑 refresh token cookie

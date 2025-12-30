@@ -1,0 +1,43 @@
+<div class="container">
+  <div class="card" style="max-width: 520px; margin: 0 auto;">
+    <div class="card-header">
+      <h1 class="h1">Crea account</h1>
+      <p class="sub">Registrati per accedere al tuo voucher.</p>
+    </div>
+
+    <div class="card-body">
+      <div *ngIf="shopIdValid" class="alert" style="margin-bottom: 12px;">
+        Registrazione per store: <b>{{ shopId }}</b>
+      </div>
+
+      <div *ngIf="error" class="alert">{{ error }}</div>
+
+      <form class="form" (ngSubmit)="submit()">
+        <label class="label">
+          Email
+          <input class="input" type="email" [(ngModel)]="email" name="email" required />
+        </label>
+
+        <label class="label">
+          Password
+          <input class="input" type="password" [(ngModel)]="password" name="password" required minlength="8" />
+        </label>
+
+        <label class="label">
+          Conferma password
+          <input class="input" type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required />
+        </label>
+
+        <div class="row" style="margin-top: 6px;">
+          <button class="btn" type="submit" [disabled]="loading || !shopIdValid">
+            {{ loading ? 'Creazione…' : 'Crea account' }}
+          </button>
+
+          <button class="btn btn-ghost" type="button" (click)="backToStore()">
+            Indietro
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

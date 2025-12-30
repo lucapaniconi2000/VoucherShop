@@ -1,2 +1,40 @@
-<h1>My Voucher</h1>
-<p>Qui chiameremo GET /api/me/voucher e mostreremo saldo/scadenza.</p>
+<div class="container">
+  <div class="card" style="max-width: 520px; margin: 0 auto;">
+    <div class="card-header">
+      <h1 class="h1">My Voucher</h1>
+      <p class="sub">Saldo e dettagli del tuo voucher.</p>
+    </div>
+
+    <div class="card-body" *ngIf="vm$ | async as vm">
+      <div *ngIf="vm.state === 'loading'">Caricamento…</div>
+
+      <div *ngIf="vm.state === 'empty'" class="alert">
+        Nessun voucher disponibile al momento.
+        <div style="margin-top: 10px;">
+          <button class="btn btn-ghost" type="button" (click)="reload()">Riprova</button>
+        </div>
+      </div>
+
+      <div *ngIf="vm.state === 'error'" class="alert">
+        {{ vm.message }}
+        <div style="margin-top: 10px;">
+          <button class="btn btn-ghost" type="button" (click)="reload()">Riprova</button>
+        </div>
+      </div>
+
+      <div *ngIf="vm.state === 'ready'">
+        <div class="badge">
+          <span>Currency:</span> <b>{{ vm.voucher.currency }}</b>
+        </div>
+
+        <p style="margin-top: 12px;">
+          <b>Saldo:</b> {{ vm.voucher.amount }} {{ vm.voucher.currency }}
+        </p>
+
+        <p><b>Aggiornato:</b> {{ vm.voucher.updateAt }}</p>
+        <p><b>Scadenza:</b> {{ vm.voucher.expiresAt }}</p>
+        <p><b>Status:</b> {{ vm.voucher.status }}</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,31 +1,53 @@
 import { Routes } from '@angular/router';
 import { ShellComponent } from './layout/shell/shell';
-import { LoginComponent } from './features/auth/login/login';
-import { MyVoucherComponent } from './features/me/my-voucher/my-voucher';
-import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard';
+import { authGuard, roleGuard } from './core/auth/auth.guards';
 
 export const routes: Routes = [
-  // login fuori dal layout
-  {
-  path: 'login',
-  loadComponent: () =>
-    import('./features/auth/login/login')
-      .then(m => m.LoginComponent)
-  },
-
-  // layout principale
   {
     path: '',
     component: ShellComponent,
     children: [
-      { path: 'me/voucher', component: MyVoucherComponent },
-      { path: 'admin', component: AdminDashboardComponent },
+      // PUBLIC
+      {
+        path: 'store/:shopId',
+        loadComponent: () =>
+          import('./features/store/store-landing/store-landing')
+            .then(m => m.StoreLandingComponent)
+      },
+      {
+        path: 'login',
+        loadComponent: () =>
+          import('./features/auth/login/login')
+            .then(m => m.LoginComponent)
+      },
+      {
+        path: 'register',
+        loadComponent: () =>
+          import('./features/auth/register/register')
+            .then(m => m.RegisterComponent)
+      },
 
-      // redirect base
-      { path: '', pathMatch: 'full', redirectTo: 'me/voucher' },
+      // PROTECTED
+      {
+        path: 'me/voucher',
+        canMatch: [authGuard, roleGuard('User')],
+        loadComponent: () =>
+          import('./features/me/my-voucher/my-voucher')
+            .then(m => m.MyVoucherComponent)
+      },
+      {
+        path: 'admin',
+        canMatch: [authGuard, roleGuard('Admin')],
+        loadComponent: () =>
+          import('./features/admin/admin-dashboard/admin-dashboard')
+            .then(m => m.AdminDashboardComponent)
+      },
+
+      // HOME
+      { path: '', pathMatch: 'full', redirectTo: 'login' },
+
+      // FALLBACK
+      { path: '**', redirectTo: 'login' },
     ],
   },
-
-  // fallback
-  { path: '**', redirectTo: 'me/voucher' },
 ];

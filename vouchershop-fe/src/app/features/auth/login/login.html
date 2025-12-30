@@ -25,6 +25,10 @@
           <button class="btn btn-ghost" type="button" (click)="email=''; password=''; error=null;">
             Pulisci
           </button>
+
+          <button class="btn btn-ghost" type="button" (click)="goRegister()">
+            Non hai un account? Registrati
+          </button>
         </div>
 
         <div *ngIf="error" class="alert">
@@ -34,3 +38,5 @@
     </div>
   </div>
 </div>
+
+
