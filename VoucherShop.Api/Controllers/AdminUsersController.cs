@@ -51,7 +51,10 @@ public sealed class AdminUsersController : ControllerBase
 
         await _userManager.AddToRoleAsync(user, "User");
 
-        return Ok(new { userId = user.Id });
+        return CreatedAtAction(
+            nameof(CreateUser), 
+            new CreateUserResponse(user.Id, user.Email)
+        );
     }
 
     [HttpGet]

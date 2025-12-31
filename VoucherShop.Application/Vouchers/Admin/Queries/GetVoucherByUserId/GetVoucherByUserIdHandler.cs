@@ -39,7 +39,7 @@ public sealed class GetVoucherByUserIdHandler
                 v.Balance.Currency,
                 v.UpdatedAt,
                 v.ExpiresAt,
-                v.ExpiresAt < now
+                v.ExpiresAt <= now
             ))
             .SingleOrDefaultAsync(ct);
     }

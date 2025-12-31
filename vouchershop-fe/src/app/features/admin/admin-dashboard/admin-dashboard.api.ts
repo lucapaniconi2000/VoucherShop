@@ -21,14 +21,23 @@ export interface AdminUserDto {
 }
 
 // ✅ Register tenant-aware (Admin)
-export interface RegisterRequest {
+export interface CreateUserRequest {
   email: string;
   password: string;
 }
 
-export interface RegisterResponse {
+export interface CreateUserResponse {
   userId: string;
   email: string;
+}
+
+export interface AdminVoucherDto {
+  userId: string;
+  amount: number;
+  currency: string;
+  updatedAt: string;
+  expiresAt: string;
+  isExpired: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -49,8 +58,11 @@ export class AdminDashboardApi {
     return this.http.get<AdminUserDto[]>(`${this.baseUrl}/admin/users`);
   }
 
-  // ✅ la tua rotta BE: POST /api/admin/users/register
-  register(req: RegisterRequest): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(`${this.baseUrl}/auth/register`, req);
+  createUser(req: CreateUserRequest) : Observable<CreateUserResponse> {
+    return this.http.post<CreateUserResponse>(`${this.baseUrl}/admin/users`, req);
+  }
+
+  voucher(userId: string) : Observable<AdminVoucherDto> {
+    return this.http.get<AdminVoucherDto>(`${this.baseUrl}/admin/vouchers/${userId}`);
   }
 }

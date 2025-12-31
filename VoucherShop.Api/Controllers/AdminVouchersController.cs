@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VoucherShop.Api.Contracts.Admin;
 using VoucherShop.Application.Vouchers.Admin.Queries.GetVoucherAudit;
+using VoucherShop.Application.Vouchers.Admin.Queries.GetVoucherByUserId;
 using VoucherShop.Application.Vouchers.Commands.UpdateVoucherAmount;
 
 namespace VoucherShop.Api.Controllers;
@@ -17,6 +18,17 @@ public sealed class AdminVouchersController : ControllerBase
     public AdminVouchersController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    [HttpGet("{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetVoucher(Guid userId, CancellationToken ct)
+    {
+        var dto = await _mediator.Send(new GetVoucherByUserIdQuery(userId), ct);
+        return dto is null ? NotFound() : Ok(dto);
     }
 
     [HttpPut("{userId:guid}")]

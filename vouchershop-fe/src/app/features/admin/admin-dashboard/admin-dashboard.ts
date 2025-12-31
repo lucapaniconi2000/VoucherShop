@@ -10,8 +10,8 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
-import { catchError, exhaustMap, map, shareReplay, startWith, withLatestFrom } from 'rxjs/operators';
-import { AdminDashboardApi, VoucherAuditDto, AdminUserDto } from './admin-dashboard.api';
+import { catchError, exhaustMap, map, shareReplay, startWith, switchMap, withLatestFrom } from 'rxjs/operators';
+import { AdminDashboardApi, VoucherAuditDto, AdminUserDto, AdminVoucherDto } from './admin-dashboard.api';
 
 type HistoryVm =
   | { state: 'idle' }
@@ -43,6 +43,12 @@ type AdminForm = {
   newAmount: FormControl<number>;
   expiresAtLocal: FormControl<string>;
 };
+
+type VoucherVm =
+  | { state: 'idle' }
+  | { state: 'loading' }
+  | { state: 'error'; message: string }
+  | { state: 'ready'; voucher: AdminVoucherDto };
 
 type AdminFormValue = {
   userId: string;
@@ -99,6 +105,7 @@ export class AdminDashboardComponent {
   private readonly loadHistory$ = new BehaviorSubject<void>(undefined);
   private readonly doUpdate$ = new BehaviorSubject<void>(undefined);
   private readonly loadUsers$ = new BehaviorSubject<void>(undefined);
+  private readonly loadVoucher$ = new BehaviorSubject<void>(undefined);
 
   // ✅ create user trigger (niente emission iniziale)
   private readonly doCreateUser$ = new Subject<void>();
@@ -110,6 +117,7 @@ export class AdminDashboardComponent {
   readonly updateVm$: Observable<UpdateVm>;
   readonly usersVm$: Observable<UsersVm>;
   readonly createUserVm$: Observable<CreateUserVm>;
+  readonly voucherVm$: Observable<VoucherVm>;
 
   constructor(
     private readonly fb: NonNullableFormBuilder,
@@ -142,7 +150,7 @@ export class AdminDashboardComponent {
 
     this.historyVm$ = this.loadHistory$.pipe(
       withLatestFrom(rawValue$),
-      exhaustMap(([, v]: [void, AdminFormValue]) => {
+      switchMap(([, v]: [void, AdminFormValue]) => {
         const userId = v.userId.trim();
 
         if (this.form.controls.userId.invalid) return of({ state: 'idle' } as const);
@@ -153,7 +161,8 @@ export class AdminDashboardComponent {
           startWith({ state: 'loading' } as const)
         );
       }),
-      startWith({ state: 'idle' } as const)
+      startWith({ state: 'idle' } as const),
+      shareReplay(1)
     );
 
     this.updateVm$ = this.doUpdate$.pipe(
@@ -168,7 +177,11 @@ export class AdminDashboardComponent {
         const newExpiresAtUtc = localDateTimeToUtcIso(expiresAtLocal);
 
         return this.api.updateVoucher(userId, { newAmount, newExpiresAtUtc }).pipe(
-          map(() => ({ state: 'success', message: 'Voucher aggiornato.' } as const)),
+          map(() => {
+            this.loadVoucher$.next();
+            this.loadHistory$.next();
+            return { state: 'success', message: 'Voucher aggiornato.' } as const;
+          }),
           catchError(() => of({ state: 'error', message: 'Aggiornamento fallito.' } as const)),
           startWith({ state: 'loading' } as const)
         );
@@ -198,7 +211,7 @@ export class AdminDashboardComponent {
           return of({ state: 'error', message: 'Email/password non valide.' } as const);
         }
 
-        return this.api.register({ email, password }).pipe(
+        return this.api.createUser({ email, password }).pipe(
           map(res => {
             // refresh lista utenti
             this.reloadUsers();
@@ -206,12 +219,13 @@ export class AdminDashboardComponent {
             // autopopola userId e carica history
             this.form.controls.userId.setValue(res.userId);
             this.form.controls.userId.markAsTouched();
+            this.loadVoucher$.next();
             this.loadHistory$.next();
 
             // reset form create user
             this.createUserForm.reset({ email: '', password: '' });
 
-            return { state: 'success', message: `Utente creato: ${res.email}` } as const;
+            return { state: 'success', message: `Utente creato: ${res.userId}` } as const;
           }),
           catchError(() => of({ state: 'error', message: 'Creazione fallita (email già esistente?).' } as const)),
           startWith({ state: 'loading' } as const)
@@ -220,6 +234,24 @@ export class AdminDashboardComponent {
       startWith({ state: 'idle' } as const),
       shareReplay(1)
     );
+
+    this.voucherVm$ = this.loadVoucher$.pipe(
+      withLatestFrom(rawValue$),
+      // qui meglio switchMap così ogni trigger prende l'ultimo
+      switchMap(([, v]: [void, AdminFormValue]) => {
+        const userId = v.userId.trim();
+
+        if(this.form.controls.userId.invalid) return of({ state: 'idle' } as const);
+
+        return this.api.voucher(userId).pipe(
+          map(voucher => ({ state: 'ready', voucher } as const)),
+          catchError(() => of({ state: 'error', message: 'Impossibile caricare il voucher.' } as const)),
+          startWith({ state: 'loading' } as const)
+        );
+      }),
+      startWith({ state: 'idle' } as const),
+      shareReplay(1)
+    )
   }
 
   get userIdCtrl() {
@@ -277,7 +309,9 @@ export class AdminDashboardComponent {
   selectUser(u: AdminUserDto): void {
     this.form.controls.userId.setValue(u.id);
     this.form.controls.userId.markAsTouched();
-    this.loadHistory$.next(); // auto-load history appena selezionato
+
+    this.loadVoucher$.next(); // ✅ totale attuale
+    this.loadHistory$.next(); // ✅ history
   }
 
   reloadUsers(): void {
@@ -287,4 +321,9 @@ export class AdminDashboardComponent {
   trackByUserId(_: number, u: AdminUserDto) {
     return u.id;
   }
+
+  trackByAudit(_: number, it: VoucherAuditDto) {
+    return `${it.action}-${it.performedAt}-${it.performedByUserId}`;
+  }
+
 }

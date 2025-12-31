@@ -264,6 +264,7 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    /*
     // ✅ Register tenant-aware (solo utenti autenticati, tipicamente Admin)
     // Crea un user nello stesso Shop del caller (shop_id da token)
     [Authorize(Roles = "Admin")]
@@ -302,6 +303,7 @@ public class AuthController : ControllerBase
             new RegisterResponse(user.Id, user.Email!)
         );
     }
+    */
 
     private void SetRefreshCookie(string token)
     {
