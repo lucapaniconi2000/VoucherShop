@@ -100,6 +100,7 @@ function localDateTimeToUtcIso(localValue: string): string {
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './admin-dashboard.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrls: [ './admin-dashboard.css' ]
 })
 export class AdminDashboardComponent {
   private readonly loadHistory$ = new BehaviorSubject<void>(undefined);

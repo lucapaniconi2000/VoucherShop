@@ -1,13 +1,11 @@
-<div class="admin-page">
+<div class="page">
 
-  <!-- TOP GRID -->
-  <div class="admin-grid">
-
-    <!-- LEFT -->
+  <div class="grid">
+    <!-- USERS + CREATE -->
     <section class="card">
-      <header class="card__header admin-header">
+      <header class="card__head">
         <h2 class="h2">Users</h2>
-        <button class="btn btn-ghost" type="button" (click)="reloadUsers()">Reload</button>
+        <button class="btn btn--ghost" type="button" (click)="reloadUsers()">Reload</button>
       </header>
 
       <ng-container *ngIf="usersVm$ | async as vm">
@@ -15,11 +13,11 @@
         <p *ngIf="vm.state === 'error'" class="error">{{ vm.message }}</p>
         <p *ngIf="vm.state === 'empty'" class="muted">Nessun utente nello shop.</p>
 
-        <ul *ngIf="vm.state === 'ready'" class="users-list">
+        <ul *ngIf="vm.state === 'ready'" class="list">
           <li *ngFor="let u of vm.users; trackBy: trackByUserId">
-            <button type="button" class="user-row" (click)="selectUser(u)">
-              <div class="user-row__main">{{ u.email }}</div>
-              <div class="user-row__sub">{{ u.userName || u.id }}</div>
+            <button type="button" class="user" (click)="selectUser(u)">
+              <div class="user__main">{{ u.email }}</div>
+              <div class="user__sub">{{ u.userName || u.id }}</div>
             </button>
           </li>
         </ul>
@@ -31,30 +29,22 @@
 
       <form class="form" [formGroup]="createUserForm">
         <div class="field">
-          <label class="label">Email</label>
+          <div class="label">Email</div>
           <input class="input" formControlName="email" placeholder="email utente" />
-          <small *ngIf="createEmailCtrl.touched && createEmailCtrl.errors?.['required']" class="muted">
-            Email obbligatoria
-          </small>
-          <small *ngIf="createEmailCtrl.touched && createEmailCtrl.errors?.['email']" class="error">
-            Email non valida
-          </small>
+          <small *ngIf="createEmailCtrl.touched && createEmailCtrl.errors?.['required']" class="muted">Email obbligatoria</small>
+          <small *ngIf="createEmailCtrl.touched && createEmailCtrl.errors?.['email']" class="error">Email non valida</small>
         </div>
 
         <div class="field">
-          <label class="label">Password</label>
+          <div class="label">Password</div>
           <input class="input" type="password" formControlName="password" placeholder="min 8 caratteri" />
-          <small *ngIf="createPasswordCtrl.touched && createPasswordCtrl.errors?.['required']" class="muted">
-            Password obbligatoria
-          </small>
-          <small *ngIf="createPasswordCtrl.touched && createPasswordCtrl.errors?.['minlength']" class="error">
-            Minimo 8 caratteri
-          </small>
+          <small *ngIf="createPasswordCtrl.touched && createPasswordCtrl.errors?.['required']" class="muted">Password obbligatoria</small>
+          <small *ngIf="createPasswordCtrl.touched && createPasswordCtrl.errors?.['minlength']" class="error">Minimo 8 caratteri</small>
         </div>
 
         <ng-container *ngIf="createUserVm$ | async as vm">
-          <div class="row">
-            <button class="btn" type="button" (click)="createUser()"
+          <div class="actions">
+            <button class="btn btn--primary" type="button" (click)="createUser()"
                     [disabled]="createUserForm.invalid || vm.state === 'loading'">
               {{ vm.state === 'loading' ? 'Creazione…' : 'Create User' }}
             </button>
@@ -66,14 +56,11 @@
       </form>
     </section>
 
-    <!-- RIGHT -->
+    <!-- VOUCHER + UPDATE -->
     <section class="card">
-      <header class="card__header admin-header">
+      <header class="card__head">
         <h2 class="h2">Voucher</h2>
-
-        <button class="btn btn-ghost" type="button" (click)="loadHistory()" title="Reload history">
-          Reload History
-        </button>
+        <button class="btn btn--ghost" type="button" (click)="loadHistory()">Reload History</button>
       </header>
 
       <ng-container *ngIf="voucherVm$ | async as vm">
@@ -82,22 +69,13 @@
         <p *ngIf="vm.state === 'error'" class="error">{{ vm.message }}</p>
 
         <div *ngIf="vm.state === 'ready'" class="voucher">
-          <div class="voucher__amount">
-            <span class="muted">Totale attuale</span>
-            <div class="voucher__big">
-              {{ vm.voucher.amount }} <span class="muted">{{ vm.voucher.currency }}</span>
-            </div>
-          </div>
+          <div class="muted">Totale attuale</div>
+          <div class="voucher__big">{{ vm.voucher.amount }} <span class="muted">{{ vm.voucher.currency }}</span></div>
 
-          <div class="voucher__meta">
-            <div class="meta">
-              <span class="muted">Updated</span>
-              <b>{{ vm.voucher.updatedAt | date:'medium' }}</b>
-            </div>
-
-            <div class="meta">
-              <span class="muted">Expires</span>
-              <b>{{ vm.voucher.expiresAt | date:'medium' }}</b>
+          <div class="meta">
+            <div>Updated: <b>{{ vm.voucher.updatedAt | date:'medium' }}</b></div>
+            <div>
+              Expires: <b>{{ vm.voucher.expiresAt | date:'medium' }}</b>
               <span *ngIf="vm.voucher.isExpired" class="badge badge--danger">EXPIRED</span>
             </div>
           </div>
@@ -110,47 +88,31 @@
 
       <form class="form" [formGroup]="form">
         <div class="field">
-          <label class="label">UserId</label>
+          <div class="label">UserId</div>
           <input class="input" formControlName="userId" placeholder="GUID utente" />
-
-          <small *ngIf="userIdCtrl.touched && userIdCtrl.errors?.['required']" class="muted">
-            UserId è obbligatorio
-          </small>
-          <small *ngIf="userIdCtrl.touched && userIdCtrl.errors?.['guid']" class="error">
-            UserId non è un GUID valido
-          </small>
+          <small *ngIf="userIdCtrl.touched && userIdCtrl.errors?.['required']" class="muted">UserId è obbligatorio</small>
+          <small *ngIf="userIdCtrl.touched && userIdCtrl.errors?.['guid']" class="error">UserId non è un GUID valido</small>
         </div>
 
         <div class="two">
           <div class="field">
-            <label class="label">New Amount</label>
+            <div class="label">New Amount</div>
             <input class="input" type="number" formControlName="newAmount" min="0" step="0.01" />
-
-            <small *ngIf="amountCtrl.touched && amountCtrl.errors?.['required']" class="muted">
-              Importo obbligatorio
-            </small>
-            <small *ngIf="amountCtrl.touched && amountCtrl.errors?.['min']" class="error">
-              L’importo non può essere negativo
-            </small>
+            <small *ngIf="amountCtrl.touched && amountCtrl.errors?.['required']" class="muted">Importo obbligatorio</small>
+            <small *ngIf="amountCtrl.touched && amountCtrl.errors?.['min']" class="error">L’importo non può essere negativo</small>
           </div>
 
           <div class="field">
-            <label class="label">Expires At</label>
+            <div class="label">Expires At</div>
             <input class="input" type="datetime-local" formControlName="expiresAtLocal" />
-
-            <small *ngIf="expiresCtrl.touched && expiresCtrl.errors?.['required']" class="muted">
-              Scadenza obbligatoria
-            </small>
-
-            <small *ngIf="expiresAtUtcPreview" class="muted">
-              UTC che verrà inviato: <b>{{ expiresAtUtcPreview }}</b>
-            </small>
+            <small *ngIf="expiresCtrl.touched && expiresCtrl.errors?.['required']" class="muted">Scadenza obbligatoria</small>
+            <small *ngIf="expiresAtUtcPreview" class="muted">UTC che verrà inviato: <b>{{ expiresAtUtcPreview }}</b></small>
           </div>
         </div>
 
         <ng-container *ngIf="updateVm$ | async as u">
-          <div class="row">
-            <button class="btn" type="button" (click)="updateVoucher()"
+          <div class="actions">
+            <button class="btn btn--primary" type="button" (click)="updateVoucher()"
                     [disabled]="form.invalid || u.state === 'loading'">
               {{ u.state === 'loading' ? 'Aggiornamento…' : 'Update Voucher' }}
             </button>
@@ -160,28 +122,24 @@
 
             <span class="spacer"></span>
 
-            <button class="btn btn-ghost" type="button" (click)="loadHistory()"
-                    [disabled]="userIdCtrl.invalid">
+            <button class="btn btn--ghost" type="button" (click)="loadHistory()" [disabled]="userIdCtrl.invalid">
               Load History
             </button>
           </div>
         </ng-container>
       </form>
     </section>
-
   </div>
 
-  <!-- HISTORY FULL WIDTH -->
-  <section class="card history">
-    <header class="history__header">
+  <!-- HISTORY -->
+  <section class="card">
+    <header class="card__head">
       <h2 class="h2">History</h2>
-      <button class="btn btn-ghost" type="button" (click)="loadHistory()">Reload</button>
+      <button class="btn btn--ghost" type="button" (click)="loadHistory()">Reload</button>
     </header>
 
     <ng-container *ngIf="historyVm$ | async as h">
-      <p *ngIf="h.state === 'idle'" class="muted">
-        Seleziona un utente o premi “Load History”.
-      </p>
+      <p *ngIf="h.state === 'idle'" class="muted">Seleziona un utente o premi “Load History”.</p>
       <p *ngIf="h.state === 'loading'" class="muted">Caricamento…</p>
       <p *ngIf="h.state === 'empty'" class="muted">Nessuna modifica registrata.</p>
       <p *ngIf="h.state === 'error'" class="error">{{ h.message }}</p>
@@ -192,32 +150,31 @@
 
           <article class="audit__card">
             <div class="audit__top">
-              <span class="badge"
+              <span class="badge" 
                     [class.badge--update]="it.action === 'Update'"
                     [class.badge--create]="it.action === 'Create'">
                 {{ it.action }}
               </span>
-
               <span class="audit__time">{{ it.performedAt | date:'medium' }}</span>
             </div>
 
             <div class="audit__meta">
-              By <code class="code">{{ it.performedByUserId }}</code>
+              By <code class="mono">{{ it.performedByUserId }}</code>
             </div>
 
             <ng-container *ngIf="parseChanges(it.changesJson) as c">
-              <div class="audit__grid">
-                <div class="diff" *ngIf="c?.amount">
+              <div class="diff">
+                <div class="diff__row" *ngIf="c?.amount">
                   <span class="k">Amount</span>
                   <span class="v"><b>{{ c.amount.old ?? '—' }}</b> → <b>{{ c.amount.new ?? '—' }}</b></span>
                 </div>
 
-                <div class="diff" *ngIf="c?.currency">
+                <div class="diff__row" *ngIf="c?.currency">
                   <span class="k">Currency</span>
                   <span class="v"><b>{{ c.currency.old ?? '—' }}</b> → <b>{{ c.currency.new ?? '—' }}</b></span>
                 </div>
 
-                <div class="diff" *ngIf="c?.expiresAt">
+                <div class="diff__row" *ngIf="c?.expiresAt">
                   <span class="k">Expires</span>
                   <span class="v">
                     <span class="mono">{{ c.expiresAt.old ?? '—' }}</span>
@@ -227,9 +184,9 @@
                 </div>
               </div>
 
-              <details class="audit__details">
+              <details>
                 <summary>Raw JSON</summary>
-                <pre class="audit__pre">{{ c | json }}</pre>
+                <pre>{{ c | json }}</pre>
               </details>
             </ng-container>
           </article>
